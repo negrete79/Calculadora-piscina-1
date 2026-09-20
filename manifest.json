@@ -1,0 +1,19 @@
+{
+  "name": "PoolApp Universal",
+  "short_name": "PoolApp",
+  "description": "Manutenção orientada de piscina de vinil, fibra e alvenaria — funciona 100% offline.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F7F8",
+  "theme_color": "#0f5f6e",
+  "categories": ["utilities", "lifestyle"],
+  "icons": [
+    { "src": "./icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
