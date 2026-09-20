@@ -1,5 +1,5 @@
 /* PoolApp Universal — Service Worker (GitHub Pages safe: tudo relativo) */
-const CACHE = 'poolapp-v14';
+const CACHE = 'poolapp-v15';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {
