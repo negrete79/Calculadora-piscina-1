@@ -1,5 +1,5 @@
 /* PoolApp Universal — Service Worker (GitHub Pages safe: tudo relativo) */
-const CACHE = 'poolapp-v15';
+const CACHE = 'poolapp-v16';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {
@@ -20,8 +20,8 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  /* Clima e geocodificação: sempre rede, nunca cache */
-  if (url.host.includes('open-meteo') || url.host.includes('bigdatacloud')) return;
+  /* Clima e geocodificação (Open-Meteo, BigDataCloud, Nominatim): sempre rede, nunca cache */
+  if (url.host.includes('open-meteo') || url.host.includes('bigdatacloud') || url.host.includes('nominatim')) return;
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
