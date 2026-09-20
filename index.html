@@ -50,6 +50,7 @@ header.top{display:flex;align-items:center;gap:12px;padding:6px 2px 16px}
 .tt p{font-size:12.5px;font-weight:600;color:rgba(13,48,56,.55)}
 #installBtn{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--deep);color:#fff;font-weight:700;font-size:12.5px;padding:9px 14px;border-radius:999px;box-shadow:0 6px 14px rgba(3,90,103,.3);transition:transform .15s;flex:none}
 #installBtn:active{transform:scale(.94)}
+#installBtn[hidden]{display:none}
 
 /* ---------- Cards ---------- */
 .card{background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
@@ -65,7 +66,7 @@ header.top{display:flex;align-items:center;gap:12px;padding:6px 2px 16px}
 
 /* ---------- Rótulos de bloco + grades de pílulas ---------- */
 .flabel{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(13,48,56,.5);margin:2px 0 8px}
-.flabel + .flabel, .flabel.mt{margin-top:16px}
+.flabel.mt{margin-top:16px}
 .pgrid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
 .pill{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 8px;border-radius:999px;background:rgba(13,48,56,.05);font-weight:700;font-size:13px;transition:all .2s;min-width:0}
 .pill svg{flex:none}
@@ -348,7 +349,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <h1>PoolApp Universal</h1>
       <p>Piscina · Casa</p>
     </div>
-    <button id="installBtn" hidden>
+    <button id="installBtn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14"/></svg>
       Instalar app
     </button>
@@ -695,7 +696,6 @@ function renderLitro(){
   }).join('');
   $('#litroTotal').textContent = fmt(litro.reduce((s,r)=>s+SHAPES[state.shape].calc(r)*1000,0)) + ' L';
 }
-/* atualiza sem re-render para não perder o foco do input */
  $('#litroRows').addEventListener('input', e=>{
   const inp = e.target.closest('input'); if(!inp) return;
   const v = parseFloat(inp.value);
@@ -1245,34 +1245,96 @@ bnav.addEventListener('click', e=>{
   buzz(8);
 });
 
-/* ================= PWA / instalação ================= */
+/* ================= PWA / instalação (fluxo à prova de falhas) ================= */
 const installBtn = $('#installBtn');
 let deferredPrompt = null;
-const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
-function showInstall(){ if(!standalone) installBtn.hidden = false; }
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const uaStr = navigator.userAgent || '';
+/* iPhone/iPod direto; iPad moderno se anuncia como Mac com tela touch */
+const isIOS = /iPhone|iPad|iPod/.test(uaStr) || (/Macintosh/.test(uaStr) && navigator.maxTouchPoints > 1);
+
+function refreshInstallBtn(){ installBtn.hidden = isStandalone(); }
+refreshInstallBtn();
+try{
+  matchMedia('(display-mode: standalone)').addEventListener('change', refreshInstallBtn);
+}catch(e){}
+
 addEventListener('beforeinstallprompt', e=>{
-  e.preventDefault(); deferredPrompt = e; showInstall();
+  e.preventDefault();
+  deferredPrompt = e;
+  refreshInstallBtn();
 });
-if(isIOS && !standalone) showInstall();
-if(standalone) installBtn.hidden = true;
-installBtn.addEventListener('click', async ()=>{
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    const c = await deferredPrompt.userChoice;
-    if(c.outcome==='accepted') toast('Instalando o PoolApp…', 'ok');
-    deferredPrompt = null; installBtn.hidden = true;
-  } else if(isIOS){
-    openSheet('Instalar no iPhone', `
-      <ol class="ios-steps">
-        <li>Abra o PoolApp no <b>Safari</b>.</li>
-        <li>Toque no botão <b>Compartilhar</b> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg> na barra de baixo.</li>
-        <li>Role e toque em <b>“Adicionar à Tela de Início”</b>.</li>
-      </ol>
-      <div class="ios-note">Fica com ícone próprio, abre em tela cheia e funciona 100% offline — igual a um app da App Store.</div>`);
-  } else {
-    toast('Use o menu do navegador → “Instalar app”');
+addEventListener('appinstalled', ()=>{
+  deferredPrompt = null;
+  refreshInstallBtn();
+  toast('PoolApp instalado! Abra pela tela de início', 'ok');
+});
+
+/* diagnóstico: o que falta para o Chrome oferecer o convite automático */
+async function installChecks(){
+  const rows = [];
+  const mark = ok => ok ? '✅' : '⚠️';
+  const secure = location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname);
+  rows.push({s:mark(secure), t:'Página em HTTPS (exigência do navegador para instalar)'});
+  let man = false;
+  try{ man = (await fetch('./manifest.json')).ok; }catch(e){}
+  rows.push({s:mark(man), t:'manifest.json encontrado no servidor'});
+  async function fileOk(f){
+    try{ return (await fetch(f, {method:'HEAD'})).ok; }catch(e){ return false; }
   }
+  rows.push({s:mark(await fileOk('./icon-192.png')), t:'icon-192.png no repositório (o Chrome exige a partir de 192px)'});
+  rows.push({s:mark(await fileOk('./icon-512.png')), t:'icon-512.png no repositório'});
+  let sw = false;
+  try{ sw = !!(await (navigator.serviceWorker && navigator.serviceWorker.getRegistration())); }catch(e){}
+  rows.push({s:mark(sw), t:'Service Worker ativo (na 1ª visita, recarregue a página 1x)'});
+  return rows;
+}
+async function openInstallHelp(){
+  openSheet('Instalar o app', `
+    <p class="sh-intro">Seu navegador não abriu o convite automático — instale pelo menu dele em 10 segundos:</p>
+    <div class="vs-step"><span class="n">1</span><span><b>Chrome (Android):</b> menu <b>⋮</b> no topo → <b>Instalar app</b> (ou “Adicionar à tela inicial”).</span></div>
+    <div class="vs-step"><span class="n">2</span><span><b>Samsung Internet:</b> menu <b>☰</b> → <b>Adicionar página a</b> → <b>Tela inicial</b>.</span></div>
+    <div class="vs-step"><span class="n">3</span><span><b>Chrome no computador:</b> ícone de instalação na barra de endereço.</span></div>
+    <p class="mtit">Diagnóstico da instalação</p>
+    <div id="instChecks"><p class="sh-intro">verificando…</p></div>
+    <div class="ios-note">Se algo marcar ⚠️, o Chrome não chega a oferecer o convite. O motivo mais comum: <b>os ícones PNG não foram enviados</b> para a pasta do site. Resolva o item, recarregue a página e toque em “Instalar app” de novo.</div>`);
+  if(!navigator.onLine){
+    $('#instChecks').innerHTML = '<p class="sh-intro">Você está offline — reconecte para verificar.</p>';
+    return;
+  }
+  try{
+    const rows = await installChecks();
+    $('#instChecks').innerHTML = rows.map(r=>`<div class="vs-step"><span class="n">${r.s}</span><span>${r.t}</span></div>`).join('');
+  }catch(e){
+    $('#instChecks').innerHTML = '<p class="sh-intro">Não foi possível verificar agora.</p>';
+  }
+}
+function openIosInstall(){
+  openSheet('Instalar no iPhone', `
+    <ol class="ios-steps">
+      <li>Abra o PoolApp no <b>Safari</b>.</li>
+      <li>Toque no botão <b>Compartilhar</b> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg> na barra de baixo.</li>
+      <li>Role e toque em <b>“Adicionar à Tela de Início”</b>.</li>
+      <li>Confirme em <b>“Adicionar”</b>.</li>
+    </ol>
+    <div class="ios-note">No iPhone não existe o aviso automático do Chrome — é sempre por aqui. Depois de instalar, o botão some sozinho.</div>`);
+}
+installBtn.addEventListener('click', async ()=>{
+  buzz(10);
+  if(deferredPrompt){
+    try{
+      deferredPrompt.prompt();
+      const c = await deferredPrompt.userChoice;
+      if(c.outcome==='accepted') toast('Instalando o PoolApp…', 'ok');
+    }catch(err){
+      toast('O navegador recusou o convite agora — tente pelo menu', 'warn');
+    }
+    deferredPrompt = null;
+    refreshInstallBtn();
+    return;
+  }
+  if(isIOS) openIosInstall();
+  else openInstallHelp();
 });
 
 /* ================= init ================= */
