@@ -13,6 +13,70 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23007A8C'/%3E%3Cpath fill='%23fff' d='M256 88c62 75 105 137 105 189a105 105 0 1 1-210 0c0-52 43-114 105-189Z'/%3E%3C/svg%3E">
 <link rel="manifest" href="./manifest.json">
+<script>
+/* ============================================================
+   MANIFEST DINÂMICO À PROVA DE FALHAS
+   Gera os ícones PNG em canvas e injeta um manifest via Blob.
+   Assim o app é instalável SEM depender de arquivos de ícone
+   no servidor e sem manifest velho preso no cache do SW.
+   ============================================================ */
+(function(){
+  window.__manifestReady = false;
+  try{
+    function drawIcon(size, maskable){
+      var c = document.createElement('canvas'); c.width = c.height = size;
+      var x = c.getContext('2d');
+      /* fundo */
+      x.fillStyle = '#007A8C';
+      if(maskable){
+        x.fillRect(0, 0, size, size);                 /* maskable: sangria total */
+      }else{
+        var r = size * 0.22;
+        x.beginPath();
+        x.moveTo(r,0); x.arcTo(size,0,size,size,r); x.arcTo(size,size,0,size,r);
+        x.arcTo(0,size,0,0,r); x.arcTo(0,0,size,0,r); x.closePath(); x.fill();
+      }
+      /* gota (no maskable fica menor, dentro da zona segura) */
+      var s = maskable ? size * 0.22 : size * 0.30;
+      var cx = size/2, cy = size * 0.46;
+      x.fillStyle = '#fff';
+      x.beginPath();
+      x.moveTo(cx, cy - s);
+      x.bezierCurveTo(cx + s*0.58, cy - s*0.22, cx + s*0.66, cy + s*0.02, cx + s*0.66, cy + s*0.28);
+      x.arc(cx, cy + s*0.28, s*0.66, 0, Math.PI, false);
+      x.bezierCurveTo(cx - s*0.66, cy + s*0.02, cx - s*0.58, cy - s*0.22, cx, cy - s);
+      x.fill();
+      x.fillStyle = 'rgba(0,122,140,.28)';
+      x.beginPath(); x.arc(cx - s*0.22, cy + s*0.32, s*0.13, 0, 7); x.fill();
+      return c.toDataURL('image/png');
+    }
+    var scope = new URL('./', location.href).href;
+    var manifest = {
+      name: 'PoolApp Universal',
+      short_name: 'PoolApp',
+      description: 'Manutenção orientada de piscina de vinil, fibra e alvenaria — funciona 100% offline.',
+      lang: 'pt-BR', dir: 'ltr',
+      id: scope,
+      start_url: new URL('index.html', location.href).href,
+      scope: scope,
+      display: 'standalone',
+      orientation: 'portrait',
+      background_color: '#F2F7F8',
+      theme_color: '#0f5f6e',
+      icons: [
+        { src: drawIcon(192, false), sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: drawIcon(512, false), sizes: '512x512', type: 'image/png', purpose: 'any' },
+        { src: drawIcon(512, true),  sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+      ]
+    };
+    var blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+    var link = document.querySelector('link[rel="manifest"]');
+    if(!link){ link = document.createElement('link'); link.rel = 'manifest'; document.head.appendChild(link); }
+    link.href = URL.createObjectURL(blob);
+    window.__manifestReady = true;
+  }catch(e){ /* falhou? o manifest.json estático do servidor continua valendo */ }
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -64,7 +128,7 @@ header.top{display:flex;align-items:center;gap:12px;padding:6px 2px 16px}
 .chipbtn{cursor:pointer;transition:background .2s,transform .12s}
 .chipbtn:active{transform:scale(.93)}
 
-/* ---------- Rótulos de bloco + grades de pílulas ---------- */
+/* ---------- Rótulos + pílulas ---------- */
 .flabel{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(13,48,56,.5);margin:2px 0 8px}
 .flabel.mt{margin-top:16px}
 .pgrid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
@@ -132,8 +196,6 @@ details.litro[open] summary .chev{transform:rotate(180deg)}
 #valveBadge.pulse{animation:badgePulse .45s cubic-bezier(.34,1.4,.5,1)}
 @keyframes badgePulse{0%{transform:scale(.9)}55%{transform:scale(1.06)}100%{transform:scale(1)}}
 .vhint{text-align:center;font-size:11.5px;font-weight:500;color:rgba(13,48,56,.5)}
-
-/* Dica animada da válvula */
 .vtip{display:flex;align-items:center;gap:10px;margin-top:10px;width:100%;text-align:left;
   background:rgba(13,48,56,.035);border:1.5px solid rgba(13,48,56,.08);
   border-left:4px solid var(--tc,#007A8C);
@@ -145,8 +207,6 @@ details.litro[open] summary .chev{transform:rotate(180deg)}
 @keyframes icoSwing{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(10deg)}}
 .vtip-txt{flex:1;min-width:0;font-size:12.5px;font-weight:600;line-height:1.45;color:rgba(13,48,56,.85)}
 .vtip-count{flex:none;font-family:var(--mono);font-size:10.5px;font-weight:700;color:rgba(13,48,56,.4)}
-
-/* Esquema de fluxo do manual */
 .flowbox{background:rgba(13,48,56,.035);border-radius:16px;padding:12px 10px 8px;margin-bottom:12px}
 .flowbox svg{width:100%;height:auto;display:block}
 .fpipe{stroke:#c9dee3;stroke-width:5;stroke-linecap:round}
@@ -251,7 +311,7 @@ details.litro[open] summary .chev{transform:rotate(180deg)}
 .tip p{font-size:13px;font-weight:600;line-height:1.55;color:#0d5c40}
 .foot{margin-top:14px;text-align:center;font-size:11px;font-weight:600;color:rgba(13,48,56,.4);line-height:1.6}
 
-/* ---------- Barra de menu inferior ---------- */
+/* ---------- Barra inferior ---------- */
 .bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;z-index:120;
   background:rgba(255,255,255,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;
@@ -319,7 +379,6 @@ details.litro[open] summary .chev{transform:rotate(180deg)}
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
-/* ---------- Telas estreitas / desktop ---------- */
 @media (max-width:379px){
   .vpos .lbl{width:66px;font-size:8px}
   .vpos .num{width:26px;height:26px;font-size:11.5px}
@@ -340,7 +399,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <body>
 <div id="app">
 
-  <!-- 1 · HEADER (âncora: Home) -->
+  <!-- 1 · HEADER -->
   <header class="top" id="sec-home">
     <div class="logo" aria-hidden="true">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.6c3.7 4.5 6.3 8.2 6.3 11.3a6.3 6.3 0 1 1-12.6 0C5.7 10.8 8.3 7.1 12 2.6Z"/><circle cx="9.6" cy="13.6" r="1.7" fill="#007A8C" opacity=".38"/></svg>
@@ -355,7 +414,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     </button>
   </header>
 
-  <!-- 2 · CONFIGURAÇÃO (âncora: Config) -->
+  <!-- 2 · CONFIGURAÇÃO -->
   <section class="card" id="sec-config">
     <div class="shead"><span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2.2" fill="#F2F7F8"/><circle cx="15" cy="12" r="2.2" fill="#F2F7F8"/><circle cx="8" cy="17" r="2.2" fill="#F2F7F8"/></svg></span><h2>Configuração</h2></div>
 
@@ -385,7 +444,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <p class="hint" id="volHint"></p>
   </section>
 
-  <!-- 3 · LITRAGEM DO PROJETO -->
+  <!-- 3 · LITRAGEM -->
   <details class="card litro">
     <summary>
       <span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="9" width="18" height="7" rx="2"/><path d="M7 9v3M11 9v3M15 9v3"/></svg></span>
@@ -399,7 +458,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     </div>
   </details>
 
-  <!-- 4 · VÁLVULA DO FILTRO (âncora: Válvula) -->
+  <!-- 4 · VÁLVULA -->
   <section class="card" id="sec-valve">
     <div class="shead">
       <span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 12V5.5"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></span>
@@ -430,13 +489,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <p class="vhint">Arraste a manopla ou toque num número · cada giro traz uma dica nova · toque na dica para ver a próxima</p>
   </section>
 
-  <!-- 5 · LIMPEZA DE BORDAS -->
+  <!-- 5 · LIMPEZA -->
   <section class="card">
     <div class="shead"><span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13c2-2.6 4-2.6 6 0s4 2.6 6 0 4-2.6 6 0"/><path d="M3 18c2-2.6 4-2.6 6 0s4 2.6 6 0 4-2.6 6 0"/></svg></span><h2 id="cleanTitle">Limpeza de bordas · Vinil</h2><span class="chip">1x por semana</span></div>
     <div class="cleans" id="cleanList"></div>
   </section>
 
-  <!-- 6 · REGISTROS (âncora: Registro) -->
+  <!-- 6 · REGISTROS -->
   <section class="card" id="sec-regs">
     <div class="shead"><span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 12h8"/></svg></span><h2>Posição dos registros</h2></div>
     <div class="regs" id="regRow">
@@ -448,13 +507,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <div class="a-note">⚠️ Desligue a bomba antes de girar qualquer registro.</div>
   </section>
 
-  <!-- 7 · PARÂMETROS (âncora: Parâm.) -->
+  <!-- 7 · PARÂMETROS -->
   <section class="card" id="sec-params">
     <div class="shead"><span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4M11 3v5l-5.1 8.4A2.7 2.7 0 0 0 8.2 20.5h7.6a2.7 2.7 0 0 0 2.3-4.1L13 8V3"/><path d="M8.3 14.5h7.4"/></svg></span><h2>Parâmetros</h2><span class="chip">toque para medir</span></div>
     <div class="pgrid" id="paramGrid"></div>
   </section>
 
-  <!-- 8 · TRATAMENTO ORIENTADO (âncora: Tratam.) -->
+  <!-- 8 · TRATAMENTO -->
   <section class="card" id="sec-treat">
     <div class="shead"><span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 13.7 8l4.6 1.4-4.6 1.4L12 15.4l-1.7-4.6L5.7 9.4 10.3 8 12 3.5Z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></span><h2>Tratamento orientado</h2><span class="chip">3 etapas, nesta ordem</span></div>
     <div class="tstep" id="ts1">
@@ -471,7 +530,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     </div>
   </section>
 
-  <!-- 10 · FILTRAGEM PELO CLIMA (âncora: Clima) -->
+  <!-- 9 · CLIMA -->
   <section class="card" id="sec-clima">
     <div class="shead">
       <span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17.2 7.7 4.1 4.1 0 0 1 16.8 17H7Z"/></svg></span>
@@ -503,7 +562,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     </div>
   </section>
 
-  <!-- 11 · DICA RODAPÉ -->
+  <!-- 10 · DICA -->
   <div class="tip">
     <span class="tic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 18h5M10 21h4M12 3a6 6 0 0 1 3.6 10.8c-.7.5-1.1 1.3-1.1 2.2h-5c0-.9-.4-1.7-1.1-2.2A6 6 0 0 1 12 3Z"/></svg></span>
     <p id="tipText"></p>
@@ -511,7 +570,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <p class="foot">PoolApp Universal · funciona 100% offline<br>Dados salvos apenas neste aparelho</p>
 </div>
 
-<!-- Barra de menu inferior -->
+<!-- Barra inferior -->
 <nav class="bnav" id="bnav" aria-label="Menu principal">
   <a href="#sec-home" data-t="sec-home"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"/><path d="M6 10v9h12v-9"/></svg></span>Home</a>
   <a href="#sec-params" data-t="sec-params"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4M11 3v5l-5.1 8.4A2.7 2.7 0 0 0 8.2 20.5h7.6a2.7 2.7 0 0 0 2.3-4.1L13 8V3"/><path d="M8.3 14.5h7.4"/></svg></span>Parâm.</a>
@@ -549,7 +608,7 @@ const buzz = ms => { try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
 function clampVol(v){ return Math.min(300000, Math.max(1000, Math.round(v/100)*100)); }
 
-/* ================= formas de piscina ================= */
+/* ================= formas ================= */
 const SHAPES = {
   retangular:{nome:'retangular', fields:[{k:'c',lab:'Compr.'},{k:'l',lab:'Larg.'},{k:'p',lab:'Prof.'}], calc:r=>r.c*r.l*r.p,
     formula:'comprimento × largura × profundidade média (m) × 1.000 = litros'},
@@ -561,14 +620,13 @@ const SHAPES = {
     formula:'comprimento × largura × 0,785 × profundidade média (m) × 1.000 = litros'}
 };
 
-/* ================= estado (blindado contra dados de versões antigas) ================= */
+/* ================= estado ================= */
 let state = store.get('poolapp.state', {type:'vinil', volume:45000, shape:'retangular'});
 if(!isObj(state)) state = {type:'vinil', volume:45000, shape:'retangular'};
 if(!['vinil','fibra','alvenaria','infinity'].includes(state.type)) state.type = 'vinil';
 if(!SHAPES[state.shape]) state.shape = 'retangular';
 state.volume = clampVol(Number(state.volume) || 45000);
 
-/* migração: versões antigas salvavam a válvula como número puro */
 let valve = store.get('poolapp.valve', {pos:0});
 if(typeof valve === 'number') valve = {pos: Math.min(5, Math.max(0, Math.round(valve)))};
 if(!isObj(valve) || !Number.isInteger(valve.pos)) valve = {pos:0};
@@ -626,7 +684,7 @@ function closeSheet(){
 sback.addEventListener('click', closeSheet);
  $('#shX').addEventListener('click', closeSheet);
 
-/* ================= 2 · configuração ================= */
+/* ================= configuração ================= */
 const TIPAS = {
   vinil:'<b>Dica de vinil:</b> use bicarbonato de sódio para corrigir a alcalinidade — nunca cal virada: ela risca e mancha o vinil para sempre.',
   fibra:'<b>Dica de fibra:</b> nunca esvazie a piscina sem acompanhamento — a pressão do solo pode rachar o casco. Mancha de folha sai com pastilha no suporte, nunca solta.',
@@ -681,7 +739,7 @@ function renderVolume(){
  $('#volMinus').addEventListener('click', ()=>{ state.volume = clampVol(state.volume-100); store.set('poolapp.state', state); renderVolume(); renderAllDoses(); });
  $('#volPlus').addEventListener('click',  ()=>{ state.volume = clampVol(state.volume+100); store.set('poolapp.state', state); renderVolume(); renderAllDoses(); });
 
-/* ================= 3 · litragem (campos conforme a forma) ================= */
+/* ================= litragem ================= */
 function renderLitro(){
   const sh = SHAPES[state.shape];
   $('#litroRows').innerHTML = litro.map((r,i)=>{
@@ -712,7 +770,7 @@ function renderLitro(){
   toast(fmt(state.volume)+' L aplicados no volume principal', 'ok');
 });
 
-/* ================= 4 · válvula (manual + dicas animadas) ================= */
+/* ================= válvula ================= */
 const VALVE = [
  {name:'FILTRAR', a:0, c:'#157a56', bg:'rgba(47,191,143,.16)',
   sum:'A posição do dia a dia: a água é puxada pelos registros, passa pela areia e volta limpa pela junção.',
@@ -790,7 +848,6 @@ function showTip(){
   $('#vTipCount').textContent = (k+1)+'/'+tips.length;
 }
  $('#vTipBox').addEventListener('click', ()=>{ tipIdx++; showTip(); buzz(10); });
-
  $('#valveBadge').addEventListener('click', ()=> openValveSheet(valve.pos));
 function openValveSheet(i){
   const v = VALVE[i];
@@ -835,16 +892,15 @@ function openManual(){
     <p class="mtit">Regras de ouro</p>
     <div class="vs-step"><span class="n">1</span><span>Desligue <b>sempre</b> a bomba antes de girar — girar em carga rasga as lâminas internas da válvula.</span></div>
     <div class="vs-step"><span class="n">2</span><span>Pressione a manopla para baixo ao girar e deixe ela encaixar no pino.</span></div>
-    <div class="vs-step"><span class="n">3</span><span>Manômetro 0,3 bar acima da leitura limpa = retro-lavar agora, sem chorar depois.</span></div>
+    <div class="vs-step"><span class="n">3</span><span>Manômetro 0,3 bar acima da leitura limpa = retro-lavar agora.</span></div>
     <div class="vs-step"><span class="n">4</span><span>Toda retro-lavagem termina com ENXAGUAR de 30–60 s — sem atalho.</span></div>
-    <div class="vs-step"><span class="n">5</span><span>Nunca fique sobre as mangueiras de descarte durante a retro-lavagem — gastas, elas estouram.</span></div>
+    <div class="vs-step"><span class="n">5</span><span>Nunca fique sobre as mangueiras de descarte durante a retro-lavagem.</span></div>
     <div class="vs-warn">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 4 2.8 19.5h18.4L12 4Z"/><path d="M12 10v4m0 3v.5"/></svg>
       Depois de qualquer posição, religue a bomba apenas em FILTRAR.
     </div>`);
 }
  $('#vManual').addEventListener('click', ()=> openManual());
-/* drag da manopla */
 (function(){
   const handle=$('#valveHandle'), dial=$('#valveDial');
   let dragging=false;
@@ -865,7 +921,7 @@ function openManual(){
   handle.addEventListener('pointercancel', end);
 })();
 
-/* ================= 6 · registros ================= */
+/* ================= registros ================= */
 function renderRegistros(){
   document.querySelectorAll('.reg').forEach(el=>{
     const aberto = regs[el.dataset.k];
@@ -896,7 +952,7 @@ function renderRegistros(){
   renderRegistros(); renderTreat();
 });
 
-/* ================= 7 · parâmetros ================= */
+/* ================= parâmetros ================= */
 const PARAMS = [
  {id:'ph', label:'pH', unit:'', min:6, max:8.4, step:0.1, lo:7, hi:7.4, dec:1, ideal:'ideal 7,0–7,4'},
  {id:'cloro', label:'Cloro', unit:'ppm', min:0, max:10, step:0.5, lo:1, hi:3, dec:1, ideal:'ideal 1–3 ppm'},
@@ -995,7 +1051,7 @@ function openMeasure(id){
   });
 }
 
-/* ================= 8 · tratamento ================= */
+/* ================= tratamento ================= */
 function etapa1(){
   const ph=params.ph, at=params.alcalinidade, m3=state.volume/1000, L=[];
   let ok=true;
@@ -1060,7 +1116,7 @@ function renderTreat(){
 });
 function renderAllDoses(){ renderParams(); renderTreat(); }
 
-/* ================= 9 · diagnóstico ================= */
+/* ================= diagnóstico pós-sulfato ================= */
 function diagList(){
   const vol = state.volume;
   return [
@@ -1087,7 +1143,7 @@ function openDiag(){
   const open = b.hidden; b.hidden = !open; d.classList.toggle('open', open);
 });
 
-/* ================= 10 · clima ================= */
+/* ================= clima ================= */
 const FALLBACK = {lat:-18.91, lon:-48.27, city:'Uberlândia'};
 let wBusy = false;
 
@@ -1219,7 +1275,7 @@ function renderFilterFromWeather(){
   }, ()=>toast('Permissão de localização negada — usando Uberlândia','warn'), {timeout:8000, maximumAge:600000});
 });
 
-/* ================= menu inferior: scroll suave + destaque da seção ativa ================= */
+/* ================= menu inferior ================= */
 const bnav = $('#bnav');
 const NAV_IDS = ['sec-home','sec-config','sec-valve','sec-regs','sec-params','sec-treat','sec-clima'];
 function setActiveNav(id){
@@ -1245,19 +1301,16 @@ bnav.addEventListener('click', e=>{
   buzz(8);
 });
 
-/* ================= PWA / instalação (fluxo à prova de falhas) ================= */
+/* ================= PWA / instalação ================= */
 const installBtn = $('#installBtn');
 let deferredPrompt = null;
 const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const uaStr = navigator.userAgent || '';
-/* iPhone/iPod direto; iPad moderno se anuncia como Mac com tela touch */
 const isIOS = /iPhone|iPad|iPod/.test(uaStr) || (/Macintosh/.test(uaStr) && navigator.maxTouchPoints > 1);
 
 function refreshInstallBtn(){ installBtn.hidden = isStandalone(); }
 refreshInstallBtn();
-try{
-  matchMedia('(display-mode: standalone)').addEventListener('change', refreshInstallBtn);
-}catch(e){}
+try{ matchMedia('(display-mode: standalone)').addEventListener('change', refreshInstallBtn); }catch(e){}
 
 addEventListener('beforeinstallprompt', e=>{
   e.preventDefault();
@@ -1270,34 +1323,32 @@ addEventListener('appinstalled', ()=>{
   toast('PoolApp instalado! Abra pela tela de início', 'ok');
 });
 
-/* diagnóstico: o que falta para o Chrome oferecer o convite automático */
+/* diagnóstico: HTTPS, manifest gerado no app, SW controlando, conexão */
 async function installChecks(){
-  const rows = [];
   const mark = ok => ok ? '✅' : '⚠️';
+  const rows = [];
   const secure = location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname);
-  rows.push({s:mark(secure), t:'Página em HTTPS (exigência do navegador para instalar)'});
-  let man = false;
-  try{ man = (await fetch('./manifest.json')).ok; }catch(e){}
-  rows.push({s:mark(man), t:'manifest.json encontrado no servidor'});
-  async function fileOk(f){
-    try{ return (await fetch(f, {method:'HEAD'})).ok; }catch(e){ return false; }
-  }
-  rows.push({s:mark(await fileOk('./icon-192.png')), t:'icon-192.png no repositório (o Chrome exige a partir de 192px)'});
-  rows.push({s:mark(await fileOk('./icon-512.png')), t:'icon-512.png no repositório'});
-  let sw = false;
-  try{ sw = !!(await (navigator.serviceWorker && navigator.serviceWorker.getRegistration())); }catch(e){}
-  rows.push({s:mark(sw), t:'Service Worker ativo (na 1ª visita, recarregue a página 1x)'});
+  rows.push({s:mark(secure), t:'Página aberta em HTTPS (exigência do navegador)'});
+  rows.push({s:mark(!!window.__manifestReady), t:'Manifest e ícone gerados dentro do próprio app — não depende de arquivos no servidor'});
+  let swCtl = false;
+  try{ swCtl = !!(navigator.serviceWorker && navigator.serviceWorker.controller); }catch(e){}
+  rows.push({s:mark(swCtl), t: swCtl
+    ? 'Service Worker ativo e controlando a página'
+    : 'Service Worker ainda não assumiu — feche TODAS as abas do site, reabra e aguarde 3 segundos'});
+  rows.push({s:mark(navigator.onLine), t: navigator.onLine
+    ? 'Conectado à internet'
+    : 'Offline — o navegador só instala com conexão no momento'});
   return rows;
 }
 async function openInstallHelp(){
   openSheet('Instalar o app', `
-    <p class="sh-intro">Seu navegador não abriu o convite automático — instale pelo menu dele em 10 segundos:</p>
-    <div class="vs-step"><span class="n">1</span><span><b>Chrome (Android):</b> menu <b>⋮</b> no topo → <b>Instalar app</b> (ou “Adicionar à tela inicial”).</span></div>
+    <p class="sh-intro">O app já cumpre os requisitos por conta própria. Se o convite não veio, siga o caminho do seu navegador — e confira o diagnóstico abaixo:</p>
+    <div class="vs-step"><span class="n">1</span><span><b>Chrome (Android):</b> menu <b>⋮</b> no topo → <b>Instalar app</b>. Se aparecer “não é possível”, o diagnóstico abaixo diz o que falta.</span></div>
     <div class="vs-step"><span class="n">2</span><span><b>Samsung Internet:</b> menu <b>☰</b> → <b>Adicionar página a</b> → <b>Tela inicial</b>.</span></div>
     <div class="vs-step"><span class="n">3</span><span><b>Chrome no computador:</b> ícone de instalação na barra de endereço.</span></div>
-    <p class="mtit">Diagnóstico da instalação</p>
+    <p class="mtit">Diagnóstico ao vivo</p>
     <div id="instChecks"><p class="sh-intro">verificando…</p></div>
-    <div class="ios-note">Se algo marcar ⚠️, o Chrome não chega a oferecer o convite. O motivo mais comum: <b>os ícones PNG não foram enviados</b> para a pasta do site. Resolva o item, recarregue a página e toque em “Instalar app” de novo.</div>`);
+    <div class="ios-note">Dica de ouro: depois do primeiro acesso, <b>feche todas as abas</b> do site, reabra o endereço e aguarde 3 segundos antes de instalar — é o tempo do Service Worker assumir o controle que o Chrome exige.</div>`);
   if(!navigator.onLine){
     $('#instChecks').innerHTML = '<p class="sh-intro">Você está offline — reconecte para verificar.</p>';
     return;
@@ -1317,7 +1368,7 @@ function openIosInstall(){
       <li>Role e toque em <b>“Adicionar à Tela de Início”</b>.</li>
       <li>Confirme em <b>“Adicionar”</b>.</li>
     </ol>
-    <div class="ios-note">No iPhone não existe o aviso automático do Chrome — é sempre por aqui. Depois de instalar, o botão some sozinho.</div>`);
+    <div class="ios-note">No iPhone não existe aviso automático — é sempre por aqui. O ícone fica ainda melhor se você subir o <b>icon-180.png</b> no repositório (gere no icon.html).</div>`);
 }
 installBtn.addEventListener('click', async ()=>{
   buzz(10);
