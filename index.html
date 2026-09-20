@@ -17,8 +17,7 @@
 /* ============================================================
    MANIFEST DINÂMICO À PROVA DE FALHAS
    Gera os ícones PNG em canvas e injeta um manifest via Blob.
-   Assim o app é instalável SEM depender de arquivos de ícone
-   no servidor e sem manifest velho preso no cache do SW.
+   O app é instalável SEM depender de arquivos no servidor.
    ============================================================ */
 (function(){
   window.__manifestReady = false;
@@ -26,17 +25,15 @@
     function drawIcon(size, maskable){
       var c = document.createElement('canvas'); c.width = c.height = size;
       var x = c.getContext('2d');
-      /* fundo */
       x.fillStyle = '#007A8C';
       if(maskable){
-        x.fillRect(0, 0, size, size);                 /* maskable: sangria total */
+        x.fillRect(0, 0, size, size);
       }else{
         var r = size * 0.22;
         x.beginPath();
         x.moveTo(r,0); x.arcTo(size,0,size,size,r); x.arcTo(size,size,0,size,r);
         x.arcTo(0,size,0,0,r); x.arcTo(0,0,size,0,r); x.closePath(); x.fill();
       }
-      /* gota (no maskable fica menor, dentro da zona segura) */
       var s = maskable ? size * 0.22 : size * 0.30;
       var cx = size/2, cy = size * 0.46;
       x.fillStyle = '#fff';
@@ -311,7 +308,7 @@ details.litro[open] summary .chev{transform:rotate(180deg)}
 .tip p{font-size:13px;font-weight:600;line-height:1.55;color:#0d5c40}
 .foot{margin-top:14px;text-align:center;font-size:11px;font-weight:600;color:rgba(13,48,56,.4);line-height:1.6}
 
-/* ---------- Barra inferior ---------- */
+/* ---------- Barra inferior (6 itens, na ordem da página) ---------- */
 .bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;z-index:120;
   background:rgba(255,255,255,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;
@@ -400,7 +397,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 <div id="app">
 
   <!-- 1 · HEADER -->
-  <header class="top" id="sec-home">
+  <header class="top">
     <div class="logo" aria-hidden="true">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.6c3.7 4.5 6.3 8.2 6.3 11.3a6.3 6.3 0 1 1-12.6 0C5.7 10.8 8.3 7.1 12 2.6Z"/><circle cx="9.6" cy="13.6" r="1.7" fill="#007A8C" opacity=".38"/></svg>
     </div>
@@ -570,15 +567,14 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <p class="foot">PoolApp Universal · funciona 100% offline<br>Dados salvos apenas neste aparelho</p>
 </div>
 
-<!-- Barra inferior -->
+<!-- Barra inferior: 6 itens, na ordem da página -->
 <nav class="bnav" id="bnav" aria-label="Menu principal">
-  <a href="#sec-home" data-t="sec-home"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"/><path d="M6 10v9h12v-9"/></svg></span>Home</a>
+  <a href="#sec-config" data-t="sec-config"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none"/><circle cx="8" cy="17" r="2.2" fill="currentColor" stroke="none"/></svg></span>Config</a>
+  <a href="#sec-valve" data-t="sec-valve"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 12V5.5"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></span>Válvula</a>
+  <a href="#sec-regs" data-t="sec-regs"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 12h8"/></svg></span>Registro</a>
   <a href="#sec-params" data-t="sec-params"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4M11 3v5l-5.1 8.4A2.7 2.7 0 0 0 8.2 20.5h7.6a2.7 2.7 0 0 0 2.3-4.1L13 8V3"/><path d="M8.3 14.5h7.4"/></svg></span>Parâm.</a>
   <a href="#sec-treat" data-t="sec-treat"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 13.7 8l4.6 1.4-4.6 1.4L12 15.4l-1.7-4.6L5.7 9.4 10.3 8 12 3.5Z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></span>Tratam.</a>
   <a href="#sec-clima" data-t="sec-clima"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17.2 7.7 4.1 4.1 0 0 1 16.8 17H7Z"/></svg></span>Clima</a>
-  <a href="#sec-valve" data-t="sec-valve"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 12V5.5"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></span>Válvula</a>
-  <a href="#sec-regs" data-t="sec-regs"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 12h8"/></svg></span>Registro</a>
-  <a href="#sec-config" data-t="sec-config"><span class="bic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none"/><circle cx="8" cy="17" r="2.2" fill="currentColor" stroke="none"/></svg></span>Config</a>
 </nav>
 
 <!-- Sheet -->
@@ -1166,13 +1162,23 @@ function fetchWeather(lat, lon){
     .then(j=>{ if(!j.current || typeof j.current.temperature_2m!=='number') throw new Error('formato'); return j.current; })
     .finally(()=>clearTimeout(to));
 }
-async function cityName(lat, lon){
+/* Nome do lugar no nível de DISTRITO/VILA (não a cidade-maior mais próxima).
+   1º OpenStreetMap (zoom=14 = vila/distrito) → 2º BigDataCloud (locality) → vazio. */
+async function placeName(lat, lon){
+  try{
+    const ctl = new AbortController(); setTimeout(()=>ctl.abort(), 5000);
+    const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+lat+'&lon='+lon+'&zoom=14&accept-language=pt-BR',{signal:ctl.signal});
+    const j = await r.json();
+    const a = j.address || {};
+    return a.village || a.town || a.suburb || a.city_district || a.hamlet || a.municipality || a.city || '';
+  }catch(e){}
   try{
     const ctl = new AbortController(); setTimeout(()=>ctl.abort(), 4000);
     const r = await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+lat+'&longitude='+lon+'&localityLanguage=pt',{signal:ctl.signal});
     const j = await r.json();
-    return j.city || j.locality || '';
-  }catch(e){ return ''; }
+    return j.locality || j.city || '';
+  }catch(e){}
+  return '';
 }
 async function locatedCoords(){
   try{
@@ -1182,7 +1188,7 @@ async function locatedCoords(){
     return await new Promise(res=>{
       navigator.geolocation.getCurrentPosition(
         p=>res({lat:+p.coords.latitude.toFixed(4), lon:+p.coords.longitude.toFixed(4)}),
-        ()=>res(null), {timeout:4000, maximumAge:600000});
+        ()=>res(null), {timeout:5000, maximumAge:300000});
     });
   }catch(e){ return null; }
 }
@@ -1199,8 +1205,10 @@ async function updateWeather(force){
   setLoading(true);
   try{
     const loc = await locatedCoords(), gps = !!loc;
-    const c = await fetchWeather(gps ? loc.lat : FALLBACK.lat, gps ? loc.lon : FALLBACK.lon);
-    const city = gps ? ((await cityName(loc.lat, loc.lon)) || 'Sua região') : FALLBACK.city;
+    const lat = gps ? loc.lat : FALLBACK.lat, lon = gps ? loc.lon : FALLBACK.lon;
+    const c = await fetchWeather(lat, lon);
+    const place = await placeName(lat, lon);
+    const city = place || (gps ? 'Sua região' : FALLBACK.city);
     const w = {temp:c.temperature_2m, hum:c.relative_humidity_2m, wind:c.wind_speed_10m, code:c.weather_code, city, gps, ts:Date.now()};
     store.set('poolapp.weather', w);
     renderWeather(w, false);
@@ -1239,7 +1247,7 @@ function renderWeather(w, fromCache){
   $('#wTime').textContent = new Date(w.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   $('#wTip').textContent = weatherTip(w);
   $('#wSrc').textContent = (fromCache ? 'Dados salvos no aparelho · última busca ' : 'Open-Meteo · atualizado agora ')
-    + (w.gps ? '· GPS' : '· Uberlândia (padrão)');
+    + (w.gps ? '· coordenadas do GPS' : '· Uberlândia (padrão)');
   renderFilterFromWeather();
 }
 function renderFilterFromWeather(){
@@ -1266,18 +1274,19 @@ function renderFilterFromWeather(){
     try{
       setLoading(true);
       const c = await fetchWeather(lat, lon);
+      const place = await placeName(lat, lon);
       const w = {temp:c.temperature_2m, hum:c.relative_humidity_2m, wind:c.wind_speed_10m, code:c.weather_code,
-                 city:(await cityName(lat,lon)) || 'Sua região', gps:true, ts:Date.now()};
+                 city: place || 'Sua região', gps:true, ts:Date.now()};
       store.set('poolapp.weather', w); renderWeather(w,false);
       toast('Clima da sua região atualizado','ok');
     }catch(e){ toast('Falhou buscar o clima da sua região','err'); }
     finally{ setLoading(false); }
-  }, ()=>toast('Permissão de localização negada — usando Uberlândia','warn'), {timeout:8000, maximumAge:600000});
+  }, ()=>toast('Permissão de localização negada — usando Uberlândia','warn'), {timeout:8000, maximumAge:300000});
 });
 
-/* ================= menu inferior ================= */
+/* ================= menu inferior (6 itens, ordem da página) ================= */
 const bnav = $('#bnav');
-const NAV_IDS = ['sec-home','sec-config','sec-valve','sec-regs','sec-params','sec-treat','sec-clima'];
+const NAV_IDS = ['sec-config','sec-valve','sec-regs','sec-params','sec-treat','sec-clima'];
 function setActiveNav(id){
   bnav.querySelectorAll('a').forEach(a=> a.classList.toggle('on', a.dataset.t===id));
 }
@@ -1286,7 +1295,7 @@ function spy(){
   spyTick = false;
   const doc = document.documentElement;
   if(innerHeight + scrollY >= doc.scrollHeight - 6){ setActiveNav('sec-clima'); return; }
-  let cur = 'sec-home';
+  let cur = 'sec-config'; /* topo da página = Configuração */
   for(const id of NAV_IDS){
     const el = document.getElementById(id);
     if(el && el.getBoundingClientRect().top <= 140) cur = id;
@@ -1323,13 +1332,12 @@ addEventListener('appinstalled', ()=>{
   toast('PoolApp instalado! Abra pela tela de início', 'ok');
 });
 
-/* diagnóstico: HTTPS, manifest gerado no app, SW controlando, conexão */
 async function installChecks(){
   const mark = ok => ok ? '✅' : '⚠️';
   const rows = [];
   const secure = location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname);
   rows.push({s:mark(secure), t:'Página aberta em HTTPS (exigência do navegador)'});
-  rows.push({s:mark(!!window.__manifestReady), t:'Manifest e ícone gerados dentro do próprio app — não depende de arquivos no servidor'});
+  rows.push({s:mark(!!window.__manifestReady), t:'Manifest e ícone gerados dentro do próprio app'});
   let swCtl = false;
   try{ swCtl = !!(navigator.serviceWorker && navigator.serviceWorker.controller); }catch(e){}
   rows.push({s:mark(swCtl), t: swCtl
@@ -1342,13 +1350,13 @@ async function installChecks(){
 }
 async function openInstallHelp(){
   openSheet('Instalar o app', `
-    <p class="sh-intro">O app já cumpre os requisitos por conta própria. Se o convite não veio, siga o caminho do seu navegador — e confira o diagnóstico abaixo:</p>
-    <div class="vs-step"><span class="n">1</span><span><b>Chrome (Android):</b> menu <b>⋮</b> no topo → <b>Instalar app</b>. Se aparecer “não é possível”, o diagnóstico abaixo diz o que falta.</span></div>
+    <p class="sh-intro">O app já cumpre os requisitos por conta própria. Se o convite não veio, siga o caminho do seu navegador:</p>
+    <div class="vs-step"><span class="n">1</span><span><b>Chrome (Android):</b> menu <b>⋮</b> no topo → <b>Instalar app</b>.</span></div>
     <div class="vs-step"><span class="n">2</span><span><b>Samsung Internet:</b> menu <b>☰</b> → <b>Adicionar página a</b> → <b>Tela inicial</b>.</span></div>
     <div class="vs-step"><span class="n">3</span><span><b>Chrome no computador:</b> ícone de instalação na barra de endereço.</span></div>
     <p class="mtit">Diagnóstico ao vivo</p>
     <div id="instChecks"><p class="sh-intro">verificando…</p></div>
-    <div class="ios-note">Dica de ouro: depois do primeiro acesso, <b>feche todas as abas</b> do site, reabra o endereço e aguarde 3 segundos antes de instalar — é o tempo do Service Worker assumir o controle que o Chrome exige.</div>`);
+    <div class="ios-note">Dica de ouro: depois do primeiro acesso, <b>feche todas as abas</b> do site, reabra e aguarde 3 segundos antes de instalar — é o tempo do Service Worker assumir o controle que o Chrome exige.</div>`);
   if(!navigator.onLine){
     $('#instChecks').innerHTML = '<p class="sh-intro">Você está offline — reconecte para verificar.</p>';
     return;
@@ -1368,7 +1376,7 @@ function openIosInstall(){
       <li>Role e toque em <b>“Adicionar à Tela de Início”</b>.</li>
       <li>Confirme em <b>“Adicionar”</b>.</li>
     </ol>
-    <div class="ios-note">No iPhone não existe aviso automático — é sempre por aqui. O ícone fica ainda melhor se você subir o <b>icon-180.png</b> no repositório (gere no icon.html).</div>`);
+    <div class="ios-note">No iPhone não existe aviso automático — é sempre por aqui.</div>`);
 }
 installBtn.addEventListener('click', async ()=>{
   buzz(10);
