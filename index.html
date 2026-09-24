@@ -292,9 +292,10 @@ details.litro[open] summary .chev{transform:rotate(180deg)}
 .ts-badge.tob{background:rgba(226,135,67,.16);color:#96551f}
 .ts-badge.rb{background:rgba(214,69,69,.12);color:var(--red)}
 .ts-body{font-size:13px;font-weight:600;line-height:1.5;color:rgba(13,48,56,.8);margin-top:6px}
-.ts-body .dose{display:flex;gap:8px;align-items:flex-start;padding:9px 11px;border-radius:12px;background:rgba(226,135,67,.1);margin-top:8px}
+/* FIX: dose em bloco — o flex criava colunas espremidas com texto longo */
+.ts-body .dose{display:block;padding:10px 12px;border-radius:12px;background:rgba(226,135,67,.1);margin-top:8px}
 .ts-body .dose.ok{background:rgba(47,191,143,.12)}
-.ts-body .dose small{display:block;font-weight:500;color:rgba(13,48,56,.55)}
+.ts-body .dose small{display:block;font-weight:500;color:rgba(13,48,56,.55);margin-top:3px}
 .ts-body .btn{margin-top:10px}
 
 /* ---------- Água colorida & manchas / segurança ---------- */
@@ -371,7 +372,7 @@ details.litro[open] summary .chev{transform:rotate(180deg)}
 .m-dose.t-ok{background:rgba(47,191,143,.12);color:#0d5c40}
 .m-dose.t-act{background:rgba(226,135,67,.12);color:#96551f}
 .m-dose.t-warn{background:rgba(214,69,69,.1);color:var(--red)}
-.m-dose small{display:block;font-weight:500;opacity:.8}
+.m-dose small{display:block;font-weight:500;opacity:.8;margin-top:3px}
 .m-save{margin-top:14px}
 .vs-sum{font-size:13.5px;font-weight:600;line-height:1.55;color:rgba(13,48,56,.8);margin-bottom:12px}
 .vs-step{display:flex;gap:10px;align-items:flex-start;background:rgba(13,48,56,.035);border-radius:13px;padding:11px 12px;margin-bottom:8px;font-size:13px;font-weight:600;line-height:1.45}
@@ -533,7 +534,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <div class="pgrid" id="paramGrid"></div>
   </section>
 
-  <!-- 7b · PRODUTOS INDICADOS (enxuto: só o necessário) -->
+  <!-- 7b · PRODUTOS INDICADOS (enxuto) -->
   <section class="card" id="sec-prod">
     <div class="shead"><span class="sic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v5l-4.5 7.6A3 3 0 0 0 8.1 20h7.8a3 3 0 0 0 2.6-4.4L14 8V3"/><path d="M7.8 13.5h8.4"/></svg></span><h2>Produtos indicados</h2><span class="chip" id="prodChip">analisando…</span></div>
     <div class="plist" id="prodList"></div>
@@ -1209,9 +1210,6 @@ function buildRecs(){
   };
 }
 
-/* Painel enxuto: por padrão mostra só AGORA + AGUARDAR.
-   Sem pendências, mostra 1 linha "Tudo em dia". O resto fica
-   atrás do botão expandir/recolher — sem poluir o layout. */
 let prodExpanded = false;
 function renderProducts(){
   const recs = buildRecs();
